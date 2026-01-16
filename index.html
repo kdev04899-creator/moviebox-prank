@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieBox</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        
+        body {
+            background: #000;
+            color: #0f0;
+            height: 100vh;
+            overflow: hidden;
+            cursor: none;
+        }
+        
+        .cursor {
+            position: absolute;
+            width: 20px;
+            height: 35px;
+            background: #0f0;
+            border-radius: 3px;
+            z-index: 1000;
+            pointer-events: none;
+            animation: blink 1s infinite;
+            mix-blend-mode: difference;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        /* Screenshot Screen */
+        #screenshotScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+        }
+        
+        .screenshot-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+        }
+        
+        .screenshot-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            animation: fadeIn 1s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Initial App Screen */
+        #appScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            display: none;
+        }
+        
+        .app-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+        
+        .app-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #ff0080, #ff8c00);
+            border-radius: 20px;
+            margin-right: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(255, 0, 128, 0.3);
+        }
+        
+        .app-title {
+            font-size: 48px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ff0080, #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 5px 15px rgba(255, 0, 128, 0.2);
+        }
+        
+        .loading-container {
+            width: 300px;
+            margin-top: 30px;
+        }
+        
+        .loading-text {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #222;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff0080, #ff8c00);
+            transition: width 0.3s;
+        }
+        
+        /* Hacking Screen */
+        #hackScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: none;
+            flex-direction: column;
+            z-index: 20;
+        }
+        
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #0f0, transparent);
+            box-shadow: 0 0 10px #0f0;
+            animation: scan 3s linear infinite;
+            z-index: 1;
+        }
+        
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+        
+        .glitch-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAQABADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH//2Q==') center/cover;
+            opacity: 0.1;
+            mix-blend-mode: overlay;
+        }
+        
+        .matrix-rain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+        
+        .hack-header {
+            background: rgba(0, 30, 0, 0.8);
+            padding: 15px;
+            border-bottom: 2px solid #0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+        
+        .hack-title {
+            color: #f00;
+            font-size: 24px;
+            text-shadow: 0 0 10px #f00;
+            animation: glitch 0.5s infinite;
+        }
+        
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+        
+        .device-info {
+            color: #0f0;
+            font-size: 14px;
+        }
+        
+        .terminal-container {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: rgba(0, 20, 0, 0.7);
+            border-right: 1px solid #0a0;
+            padding: 15px;
+            margin-right: 20px;
+            overflow-y: auto;
+        }
+        
+        .file-list {
+            list-style: none;
+        }
+        
+        .file-item {
+            padding: 8px;
+            border-bottom: 1px solid #0a0;
+            color: #0f0;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .file-item::before {
+            content: "📁";
+            margin-right: 8px;
+        }
+        
+        .file-item.deleting {
+            color: #f00;
+            animation: delete 1s forwards;
+        }
+        
+        @keyframes delete {
+            to { opacity: 0; transform: translateX(-20px); }
+        }
+        
+        .main-terminal {
+            flex: 1;
+            background: rgba(0, 10, 0, 0.9);
+            border: 1px solid #0a0;
+            border-radius: 5px;
+            padding: 15px;
+            overflow-y: auto;
+            box-shadow: inset 0 0 30px rgba(0, 255, 0, 0.1);
+        }
+        
+        .terminal-line {
+            margin-bottom: 10px;
+            animation: type 0.1s steps(40, end);
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        @keyframes type {
+            from { width: 0; }
+        }
+        
+        .cmd-prompt {
+            color: #0f0;
+        }
+        
+        .cmd-input {
+            color: #0ff;
+        }
+        
+        .cmd-output {
+            color: #ff0;
+        }
+        
+        .cmd-error {
+            color: #f00;
+        }
+        
+        .cmd-success {
+            color: #0f0;
+        }
+        
+        .blink {
+            animation: blink 0.7s infinite;
+        }
+        
+        .hack-stats {
+            background: rgba(0, 30, 0, 0.8);
+            padding: 10px;
+            border-top: 2px solid #0f0;
+            display: flex;
+            justify-content: space-around;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            color: #f00;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            color: #0f0;
+            font-size: 12px;
+        }
+        
+        .floating-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid #f00;
+            padding: 30px;
+            text-align: center;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.5);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 50px rgba(255, 0, 0, 0.5); }
+            50% { box-shadow: 0 0 80px rgba(255, 0, 0, 0.8); }
+        }
+        
+        .alert-title {
+            color: #f00;
+            font-size: 32px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #f00;
+        }
+        
+        .alert-text {
+            color: #fff;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        
+        .countdown {
+            color: #f00;
+            font-size: 48px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        
+        /* System Crash Screen */
+        #crashScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 30;
+        }
+        
+        .bsod {
+            background: #0000aa;
+            color: #fff;
+            width: 90%;
+            max-width: 800px;
+            padding: 30px;
+            border-radius: 10px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        
+        .bsod-header {
+            background: #aaaaff;
+            color: #0000aa;
+            padding: 10px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .bsod-text {
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .bsod-progress {
+            width: 100%;
+            height: 20px;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .bsod-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: #0000aa;
+            transition: width 0.3s;
+        }
+        
+        /* Camera Display */
+        .camera-display {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            height: 220px;
+            background: #000;
+            border: 3px solid #f00;
+            border-radius: 10px;
+            z-index: 9999;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+            overflow: hidden;
+            font-family: monospace;
+        }
+        
+        .camera-video {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            background: #000;
+        }
+        
+        .camera-info {
+            background: rgba(0, 0, 0, 0.8);
+            color: #0f0;
+            padding: 8px;
+            font-size: 10px;
+            border-top: 1px solid #f00;
+        }
+    </style>
+</head>
+<body>
+    <!-- Custom Cursor -->
+    <div class="cursor" id="cursor"></div>
+    
+    <!-- Screenshot Screen -->
+    <div id="screenshotScreen">
+        <div class="screenshot-container">
+            <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAQABADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH//2Q==" alt="Screenshot" class="screenshot-img" id="screenshotImg">
+        </div>
+    </div>
+    
+    <!-- Initial App Screen -->
+    <div id="appScreen">
+        <div class="app-header">
+            <div class="app-icon">M</div>
+            <div class="app-title">MovieBox</div>
+        </div>
+        <div class="loading-container">
+            <div class="loading-text">Loading your entertainment library...</div>
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Hacking Screen -->
+    <div id="hackScreen">
+        <div class="scan-line"></div>
+        <div class="glitch-overlay"></div>
+        <canvas class="matrix-rain" id="matrixRain"></canvas>
+        
+        <div class="hack-header">
+            <div class="hack-title">⚠️ SYSTEM INTRUSION DETECTED ⚠️</div>
+            <div class="device-info" id="deviceInfo"></div>
+        </div>
+        
+        <div class="terminal-container">
+            <div class="sidebar">
+                <ul class="file-list" id="fileList">
+                    <!-- Files will be added here -->
+                </ul>
+            </div>
+            <div class="main-terminal" id="mainTerminal">
+                <!-- Terminal output will be added here -->
+            </div>
+        </div>
+        
+        <div class="hack-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="dataStolen">0%</div>
+                <div class="stat-label">DATA EXTRACTED</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="timeLeft">--:--</div>
+                <div class="stat-label">TIME REMAINING</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="filesCopied">0</div>
+                <div class="stat-label">FILES COPIED</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="remoteIP">192.168.1.1</div>
+                <div class="stat-label">REMOTE SERVER</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Critical Alert -->
+    <div class="floating-alert" id="criticalAlert">
+        <div class="alert-title">CRITICAL SYSTEM BREACH</div>
+        <div class="alert-text">Your device has been compromised</div>
+        <div class="alert-text">All data is being extracted to remote server</div>
+        <div class="countdown" id="countdown">5</div>
+        <div class="alert-text">Do not turn off your device</div>
+    </div>
+    
+    <!-- System Crash Screen (BSOD) -->
+    <div id="crashScreen">
+        <div class="bsod">
+            <div class="bsod-header">Windows has encountered a critical error</div>
+            <div class="bsod-text">
+                A fatal system error has occurred. The system has been halted.<br><br>
+                Error Code: 0x000000F4 (CRITICAL_OBJECT_TERMINATION)<br>
+                Contact your system administrator or technical support group for assistance.
+            </div>
+            <div class="bsod-progress">
+                <div class="bsod-progress-bar" id="bsodProgress"></div>
+            </div>
+            <div class="bsod-text">
+                Attempting to dump physical memory...<br>
+                Physical memory dump complete.<br>
+                Contacting technical support...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const screenshotScreen = document.getElementById('screenshotScreen');
+        const appScreen = document.getElementById('appScreen');
+        const hackScreen = document.getElementById('hackScreen');
+        const crashScreen = document.getElementById('crashScreen');
+        const progress = document.getElementById('progress');
+        const mainTerminal = document.getElementById('mainTerminal');
+        const fileList = document.getElementById('fileList');
+        const cursor = document.getElementById('cursor');
+        const matrixRain = document.getElementById('matrixRain');
+        const criticalAlert = document.getElementById('criticalAlert');
+        const countdown = document.getElementById('countdown');
+        const bsodProgress = document.getElementById('bsodProgress');
+        const screenshotImg = document.getElementById('screenshotImg');
+        
+        // Stats elements
+        const dataStolen = document.getElementById('dataStolen');
+        const timeLeft = document.getElementById('timeLeft');
+        const filesCopied = document.getElementById('filesCopied');
+        const remoteIP = document.getElementById('remoteIP');
+        const deviceInfo = document.getElementById('deviceInfo');
+        
+        // Camera state
+        let cameraStream = null;
+        let cameraActive = false;
+        let cameraDisplay = null;
+        
+        // Configuration
+        const CONFIG = {
+            totalTime: 120,
+            totalFiles: 50,
+            remoteIPs: [
+                '185.143.223.1',
+                '94.23.45.67',
+                '213.32.78.90',
+                '176.31.102.45',
+                '91.121.133.77'
+            ]
+        };
+        
+        // State
+        let startTime = null;
+        let stolenData = 0;
+        let copiedFiles = 0;
+        let terminalLines = [];
+        let hackActive = false;
+        
+        // ========== CAMERA FUNCTIONS ==========
+        async function accessRealCamera() {
+            try {
+                // Request camera access
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: true
+                });
+                
+                cameraActive = true;
+                
+                // Add to terminal
+                addTerminalLine("CAMERA ACCESS GRANTED BY USER", 'success');
+                addTerminalLine("Front camera: ACTIVATED | Back camera: ACTIVATED", 'success');
+                addTerminalLine("Microphone: ACTIVATED | Recording: ENABLED", 'success');
+                
+                // Create camera display
+                createCameraDisplay();
+                
+                // Start fake data stream simulation
+                simulateDataStream();
+                
+                return cameraStream;
+                
+            } catch (error) {
+                console.error('Camera access error:', error);
+                addTerminalLine(`Camera access denied: ${error.message}`, 'error');
+                
+                // Show fake camera anyway for prank effect
+                showFakeCameraFallback();
+                return null;
+            }
+        }
+        
+        function createCameraDisplay() {
+            // Remove any existing camera display
+            const existing = document.getElementById('realCameraDisplay');
+            if (existing) existing.remove();
+            
+            // Create camera container
+            const cameraContainer = document.createElement('div');
+            cameraContainer.id = 'realCameraDisplay';
+            cameraContainer.className = 'camera-display';
+            
+            // Create video element for actual camera feed
+            const video = document.createElement('video');
+            video.className = 'camera-video';
+            video.autoplay = true;
+            video.muted = true;
+            video.playsInline = true;
+            video.srcObject = cameraStream;
+            
+            // Create camera info panel
+            const infoPanel = document.createElement('div');
+            infoPanel.className = 'camera-info';
+            
+            infoPanel.innerHTML = `
+                <div style="display: flex; justify-content: space-between;">
+                    <div>
+                        <span style="color: #f00">● REC</span> 
+                        <span id="recordingTime">00:00:00</span>
+                    </div>
+                    <div>
+                        📡 <span id="dataRate">${(Math.random() * 5 + 2).toFixed(2)} MB/s</span>
+                    </div>
+                </div>
+                <div style="margin-top: 5px; font-size: 9px; color: #aaa;">
+                    LIVE STREAM → ${CONFIG.remoteIPs[0]} | ENCRYPTED: AES-256
+                </div>
+            `;
+            
+            cameraContainer.appendChild(video);
+            cameraContainer.appendChild(infoPanel);
+            document.body.appendChild(cameraContainer);
+            
+            cameraDisplay = cameraContainer;
+            
+            // Update recording timer
+            let recordingSeconds = 0;
+            const timerElement = infoPanel.querySelector('#recordingTime');
+            const dataRateElement = infoPanel.querySelector('#dataRate');
+            
+            const timerInterval = setInterval(() => {
+                recordingSeconds++;
+                const hours = Math.floor(recordingSeconds / 3600);
+                const minutes = Math.floor((recordingSeconds % 3600) / 60);
+                const seconds = recordingSeconds % 60;
+                
+                if (timerElement) {
+                    timerElement.textContent = 
+                        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+                
+                // Update data rate randomly
+                if (dataRateElement) {
+                    dataRateElement.textContent = `${(Math.random() * 5 + 2).toFixed(2)} MB/s`;
+                }
+                
+                // Stop if camera is no longer active
+                if (!cameraActive) {
+                    clearInterval(timerInterval);
+                }
+            }, 1000);
+            
+            // Add close button
+            const closeBtn = document.createElement('div');
+            closeBtn.textContent = 'X';
+            closeBtn.style.cssText = `
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                background: rgba(255,0,0,0.7);
+                color: white;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                cursor: pointer;
+                z-index: 10000;
+            `;
+            closeBtn.onclick = () => {
+                stopCamera();
+                cameraContainer.remove();
+            };
+            cameraContainer.appendChild(closeBtn);
+        }
+        
+        function simulateDataStream() {
+            // Simulate data being sent
+            setTimeout(() => {
+                addTerminalLine("Starting live stream to remote server...", 'output');
+                
+                setTimeout(() => {
+                    addTerminalLine(`Stream established to ${CONFIG.remoteIPs[1]}`, 'success');
+                    addTerminalLine("Resolution: 720p | FPS: 30 | Bitrate: 5 Mbps", 'output');
+                    
+                    // Simulate periodic updates
+                    setInterval(() => {
+                        if (cameraActive) {
+                            const actions = [
+                                "Capturing video frames...",
+                                "Audio stream active...",
+                                "Saving footage to archive...",
+                                "Analyzing captured data...",
+                                "Uploading to backup server..."
+                            ];
+                            
+                            if (Math.random() > 0.7) {
+                                addTerminalLine(actions[Math.floor(Math.random() * actions.length)], 'output');
+                            }
+                        }
+                    }, 5000);
+                    
+                }, 1500);
+            }, 1000);
+        }
+        
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            cameraActive = false;
+            addTerminalLine("Camera access terminated", 'error');
+        }
+        
+        function showFakeCameraFallback() {
+            // Fallback if camera access is denied
+            const fakeCam = document.createElement('div');
+            fakeCam.id = 'fakeCameraFallback';
+            fakeCam.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 300px;
+                height: 220px;
+                background: #111;
+                border: 3px solid #f00;
+                border-radius: 10px;
+                z-index: 9999;
+                overflow: hidden;
+                font-family: monospace;
+            `;
+            
+            fakeCam.innerHTML = `
+                <div style="height: 150px; background: linear-gradient(45deg, #000, #222); 
+                            display: flex; align-items: center; justify-content: center;">
+                    <div style="text-align: center; color: #888;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">📷</div>
+                        <div style="font-size: 12px;">CAMERA FEED UNAVAILABLE</div>
+                        <div style="font-size: 10px; margin-top: 5px;">Access was denied by user</div>
+                    </div>
+                </div>
+                <div style="background: rgba(0,0,0,0.9); color: #f00; padding: 8px; 
+                            font-size: 10px; border-top: 1px solid #f00;">
+                    <div>⚠️ CAMERA ACCESS BLOCKED ⚠️</div>
+                    <div style="font-size: 9px; color: #aaa; margin-top: 3px;">
+                        Using simulated feed from device sensors
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(fakeCam);
+        }
+        
+        // ========== MATRIX RAIN ==========
+        function initMatrixRain() {
+            const ctx = matrixRain.getContext('2d');
+            matrixRain.width = window.innerWidth;
+            matrixRain.height = window.innerHeight;
+            
+            const chars = "01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン";
+            const fontSize = 14;
+            const columns = matrixRain.width / fontSize;
+            const drops = [];
+            
+            for (let i = 0; i < columns; i++) {
+                drops[i] = 1;
+            }
+            
+            function draw() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillRect(0, 0, matrixRain.width, matrixRain.height);
+                
+                ctx.fillStyle = '#0f0';
+                ctx.font = fontSize + 'px monospace';
+                
+                for (let i = 0; i < drops.length; i++) {
+                    const text = chars[Math.floor(Math.random() * chars.length)];
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                    
+                    if (drops[i] * fontSize > matrixRain.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+            }
+            
+            setInterval(draw, 50);
+        }
+        
+        // ========== HACKING FUNCTIONS ==========
+        function generateFiles() {
+            const fileTypes = [
+                'photos', 'videos', 'documents', 'contacts', 
+                'messages', 'banking', 'passwords', 'emails'
+            ];
+            
+            const extensions = ['.jpg', '.mp4', '.pdf', '.docx', '.txt', '.db', '.xml', '.json'];
+            
+            for (let i = 1; i <= CONFIG.totalFiles; i++) {
+                const type = fileTypes[Math.floor(Math.random() * fileTypes.length)];
+                const ext = extensions[Math.floor(Math.random() * extensions.length)];
+                const size = (Math.random() * 500 + 50).toFixed(2);
+                
+                const fileItem = document.createElement('li');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `${type}_${i}${ext} (${size} MB)`;
+                fileList.appendChild(fileItem);
+            }
+        }
+        
+        function addTerminalLine(text, type = 'output') {
+            const line = document.createElement('div');
+            line.className = `terminal-line cmd-${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            line.innerHTML = `<span class="cmd-prompt">[${timestamp}] $ </span><span class="cmd-input">${text}</span>`;
+            
+            mainTerminal.appendChild(line);
+            mainTerminal.scrollTop = mainTerminal.scrollHeight;
+            terminalLines.push({text, type, time: Date.now()});
+            
+            if (terminalLines.length > 50) {
+                const firstLine = mainTerminal.querySelector('.terminal-line:first-child');
+                if (firstLine) firstLine.remove();
+                terminalLines.shift();
+            }
+        }
+        
+        async function simulateHack() {
+            const commands = [
+                "sudo nmap -sS -O 192.168.1.1/24",
+                "exploit android_kernel_cve_2023_1234",
+                "bypass_selinux --force",
+                "extract_credentials --all-users",
+                "access_storage --path /sdcard/",
+                "download_photos --quality original",
+                "intercept_sms --real-time",
+                "access_camera --front --back --mic",
+                "record_audio --duration 300",
+                "get_location --gps --wifi",
+                "dump_contacts --format vcf",
+                "extract_banking_data",
+                "get_auth_tokens",
+                "establish_persistence --method boot",
+                "encrypt_data --algorithm aes-256",
+                "upload_to_server --ip " + CONFIG.remoteIPs[Math.floor(Math.random() * CONFIG.remoteIPs.length)],
+                "clean_logs --system --apps",
+                "hide_process --pid " + (1000 + Math.floor(Math.random() * 9000))
+            ];
+            
+            let delay = 1000;
+            
+            commands.forEach((cmd, index) => {
+                setTimeout(async () => {
+                    addTerminalLine(cmd, 'input');
+                    
+                    // Simulate command output
+                    setTimeout(async () => {
+                        const outputs = [
+                            `Scan completed. Found ${Math.floor(Math.random() * 50) + 10} vulnerable devices`,
+                            "Exploit successful. Root access obtained",
+                            "SELinux bypassed. Full system access granted",
+                            "Credentials extracted: " + (Math.floor(Math.random() * 20) + 5) + " user accounts",
+                            "Storage accessed. Found " + (Math.floor(Math.random() * 1000) + 500) + " files",
+                            "Downloading photos... (" + (Math.floor(Math.random() * 100) + 50) + " items)",
+                            "SMS interception active. Capturing messages...",
+                            "Camera access requested...",
+                            "Audio recording started",
+                            "Location obtained: " + (Math.random() * 90).toFixed(6) + "°N, " + (Math.random() * 180).toFixed(6) + "°E",
+                            "Contacts dumped: " + (Math.floor(Math.random() * 500) + 100) + " entries",
+                            "Banking data extracted: " + (Math.floor(Math.random() * 10) + 1) + " accounts",
+                            "Auth tokens captured",
+                            "Persistence established. Will survive reboot",
+                            "Data encrypted with key: " + Math.random().toString(36).substr(2, 16),
+                            "Upload successful. Transfer rate: " + (Math.random() * 10 + 5).toFixed(2) + " MB/s",
+                            "Logs cleaned. No trace of intrusion",
+                            "Process hidden. Detection probability: 0.2%"
+                        ];
+                        
+                        // Handle camera command specially
+                        if (cmd.includes("access_camera")) {
+                            // Request actual camera access
+                            await accessRealCamera();
+                        } else {
+                            addTerminalLine(outputs[index], index % 3 === 0 ? 'error' : 'success');
+                        }
+                        
+                        // Update stolen data percentage
+                        stolenData = Math.min(100, Math.floor((index + 1) / commands.length * 100));
+                        dataStolen.textContent = stolenData + "%";
+                        
+                        // Update file count
+                        if (index % 3 === 0) {
+                            copiedFiles = Math.min(CONFIG.totalFiles, copiedFiles + Math.floor(Math.random() * 5) + 3);
+                            filesCopied.textContent = copiedFiles;
+                            
+                            // Animate file deletion
+                            const files = fileList.querySelectorAll('.file-item:not(.deleting)');
+                            if (files.length > 0) {
+                                const file = files[Math.floor(Math.random() * files.length)];
+                                file.classList.add('deleting');
+                                setTimeout(() => file.remove(), 1000);
+                            }
+                        }
+                        
+                        // Change remote IP randomly
+                        if (index % 4 === 0) {
+                            remoteIP.textContent = CONFIG.remoteIPs[Math.floor(Math.random() * CONFIG.remoteIPs.length)];
+                        }
+                        
+                        // Show critical alert at 70%
+                        if (stolenData >= 70 && !document.querySelector('.floating-alert:visible')) {
+                            showCriticalAlert();
+                        }
+                        
+                        // Complete hack at 100%
+                        if (stolenData >= 100) {
+                            completeHack();
+                        }
+                    }, 500);
+                }, delay);
+                
+                delay += 1500 + Math.random() * 1000;
+            });
+        }
+        
+        function showCriticalAlert() {
+            criticalAlert.style.display = 'block';
+            let count = 5;
+            
+            const countdownInterval = setInterval(() => {
+                countdown.textContent = count;
+                count--;
+                
+                if (count < 0) {
+                    clearInterval(countdownInterval);
+                    criticalAlert.style.display = 'none';
+                }
+            }, 1000);
+        }
+        
+        function completeHack() {
+            setTimeout(() => {
+                addTerminalLine("All data extraction complete.", 'success');
+                addTerminalLine("Initiating system crash sequence...", 'error');
+                
+                // Stop camera if active
+                if (cameraActive) {
+                    stopCamera();
+                }
+                
+                setTimeout(() => {
+                    hackScreen.style.display = 'none';
+                    crashScreen.style.display = 'flex';
+                    
+                    // Animate BSOD progress
+                    let progress = 0;
+                    const bsodInterval = setInterval(() => {
+                        progress += 2;
+                        bsodProgress.style.width = progress + "%";
+                        
+                        if (progress >= 100) {
+                            clearInterval(bsodInterval);
+                        }
+                    }, 100);
+                }, 3000);
+            }, 2000);
+        }
+        
+        function updateTimer() {
+            if (!startTime || !hackActive) return;
+            
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const remaining = CONFIG.totalTime - elapsed;
+            
+            if (remaining <= 0) {
+                timeLeft.textContent = "00:00";
+                return;
+            }
+            
+            const minutes = Math.floor(remaining / 60);
+            const seconds = remaining % 60;
+            timeLeft.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Update device info
+            const fakeBattery = Math.max(10, 100 - elapsed * 2);
+            const fakeTemp = Math.min(85, 35 + elapsed * 0.5);
+            deviceInfo.innerHTML = `Battery: ${fakeBattery}% | Temp: ${fakeTemp.toFixed(1)}°C | CPU: ${(20 + elapsed * 0.3).toFixed(1)}%`;
+        }
+        
+        // ========== EVENT LISTENERS ==========
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+        
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey || e.key === 'F12' || e.key === 'Escape') {
+                e.preventDefault();
+                addTerminalLine(`Blocked key combination: ${e.key}`, 'error');
+            }
+        });
+        
+        window.history.pushState(null, null, window.location.href);
+        window.addEventListener('popstate', () => {
+            window.history.pushState(null, null, window.location.href);
+            addTerminalLine("Blocked navigation attempt", 'error');
+        });
+        
+        // ========== START PRANK ==========
+        function startPrank() {
+            // First show screenshot for 3 seconds
+            setTimeout(() => {
+                screenshotScreen.style.display = 'none';
+                appScreen.style.display = 'flex';
+                
+                // Simulate loading
+                let loadProgress = 0;
+                const loadingInterval = setInterval(() => {
+                    loadProgress += Math.random() * 10;
+                    progress.style.width = Math.min(loadProgress, 100) + "%";
+                    
+                    if (loadProgress >= 100) {
+                        clearInterval(loadingInterval);
+                        
+                        // Switch to hack screen
+                        setTimeout(() => {
+                            appScreen.style.display = 'none';
+                            hackScreen.style.display = 'flex';
+                            
+                            // Initialize hacking
+                            startTime = Date.now();
+                            hackActive = true;
+                            initMatrixRain();
+                            generateFiles();
+                            simulateHack();
+                            
+                            // Start timer updates
+                            setInterval(updateTimer, 1000);
+                        }, 500);
+                    }
+                }, 200);
+            }, 3000);
+        }
+        
+        // Start when page loads
+        window.addEventListener('load', () => {
+            setTimeout(startPrank, 1000);
+        });
+    </script>
+</body>
+</html>
